@@ -2,36 +2,36 @@
 import AWS, { nanoid } from '../aws'
 
 
-import { PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY_INDEX_SORT, PUT, UPDATE_SORT } from './types.d'
+import { PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY_INDEX_SORT, PUT, UPDATE_SORT, SCAN, SCAN_ALL } from './types.d'
 
 
 
 const client: AWS.DynamoDB.Types.DocumentClient = new AWS.DynamoDB.DocumentClient()
 
-export const scan = async (tableName: string, exc: any = '', filter: any = '') => {
+export const scan = async (fn: SCAN) => {
   let params: any = {
-    TableName: tableName,
+    TableName: fn.tableName,
   }
-  if (exc !== '') params['ExclusiveStartKey'] = exc
-  if (filter !== '') {
-    params['FilterExpression'] = filter.key + ' = :FILDATA'
-    params['ExpressionAttributeValues'] = { ":FILDATA": filter.data }
-  }
+  // if (exc !== '') params['ExclusiveStartKey'] = exc
+  // if (filter !== '') {
+  //   params['FilterExpression'] = filter.key + ' = :FILDATA'
+  //   params['ExpressionAttributeValues'] = { ":FILDATA": filter.data }
+  // }
   return new Promise(resolve => {
     client.scan(params, function (err, data) {
       if (err) console.log(err)
-      else resolve(data)
+      else resolve(data.Items)
     })
   })
 }
 
-export const scanAll = async (tableName: string, filter: any = '') => {
+export const scanAll = async (fn: SCAN_ALL) => {
   return new Promise(async resolve => {
     let list = []
-    let res: any = await scan(tableName, '', filter)
+    let res: any = await scan(fn)
     list.push(...res.Items)
     while ("LastEvaluatedKey" in res) {
-      res = await scan(tableName, res.LastEvaluatedKey, filter)
+      res = await scan(fn)
       list.push(...res.Items)
     }
     resolve(list)

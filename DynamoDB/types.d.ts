@@ -1,3 +1,11 @@
+export type SCAN = {
+  tableName: string
+}
+
+export type SCAN_ALL = {
+  tableName: string
+}
+
 export type QUERY = {
   tableName: string
   pk: string
