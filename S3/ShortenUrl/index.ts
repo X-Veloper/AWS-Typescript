@@ -1,6 +1,6 @@
-import AWS, { nanoid }  from '../../aws'
+import { S3, nanoid }  from '../../aws'
 
-const client = new AWS.S3()
+
 
 export const createShortenUrl = async (redirectUrl: string) => {
   const shortenKey = nanoid()
@@ -11,7 +11,7 @@ export const createShortenUrl = async (redirectUrl: string) => {
   }
   console.log(params)
   return new Promise<string>((resolve) => {
-    client.putObject(params, function(err, data) {
+    S3.putObject(params, function(err, data) {
       if (err){
         console.log('err : ', err)
         resolve('')
