@@ -9,4 +9,7 @@ AWS.config.update({
   region: 'ap-southeast-1'
 })
 
+
+export const S3 = new AWS.S3()
+export const dynamodb = AWS.DynamoDB
 export default AWS
