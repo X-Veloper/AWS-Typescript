@@ -2,35 +2,34 @@
 import AWS, { nanoid } from '../aws'
 
 
-import { PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY_INDEX_SORT, PUT, UPDATE_SORT, SCAN, SCAN_ALL } from './types.d'
+import { PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY_INDEX_SORT, PUT, UPDATE_SORT } from './types.d'
 
-const client = new dynamodb.DocumentClient()
-const DynamoDBCondition = dynamodb
+const client: AWS.DynamoDB.Types.DocumentClient = new AWS.DynamoDB.DocumentClient()
 
-export const scan = async (fn: SCAN) => {
+export const scan = async (tableName: string, exc: any = '', filter: any = '') => {
   let params: any = {
-    TableName: fn.tableName,
+    TableName: tableName,
   }
-  // if (exc !== '') params['ExclusiveStartKey'] = exc
-  // if (filter !== '') {
-  //   params['FilterExpression'] = filter.key + ' = :FILDATA'
-  //   params['ExpressionAttributeValues'] = { ":FILDATA": filter.data }
-  // }
+  if (exc !== '') params['ExclusiveStartKey'] = exc
+  if (filter !== '') {
+    params['FilterExpression'] = filter.key + ' = :FILDATA'
+    params['ExpressionAttributeValues'] = { ":FILDATA": filter.data }
+  }
   return new Promise(resolve => {
     client.scan(params, function (err, data) {
       if (err) console.log(err)
-      else resolve(data.Items)
+      else resolve(data)
     })
   })
 }
 
-export const scanAll = async (fn: SCAN_ALL) => {
+export const scanAll = async (tableName: string, filter: any = '') => {
   return new Promise(async resolve => {
     let list = []
-    let res: any = await scan(fn)
+    let res: any = await scan(tableName, '', filter)
     list.push(...res.Items)
     while ("LastEvaluatedKey" in res) {
-      res = await scan(fn)
+      res = await scan(tableName, res.LastEvaluatedKey, filter)
       list.push(...res.Items)
     }
     resolve(list)
@@ -81,8 +80,8 @@ const generateKeyProjection = (item: any) => (item ? item.reduce((sum: any, cur:
 
 
 export const querySort = async (fn: QUERY_SORT) => {
-  const expName: dynamodb.ExpressionAttributeNameMap = generateKeyProjection(fn.project)
-  let params: dynamodb.DocumentClient.QueryInput = {
+  const expName: AWS.DynamoDB.ExpressionAttributeNameMap = generateKeyProjection(fn.project)
+  let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
     KeyConditionExpression: "#ID = :ID and #SK = :SK  ",
     ExpressionAttributeNames: {
@@ -108,8 +107,8 @@ export const querySort = async (fn: QUERY_SORT) => {
 }
 
 export const queryBetween = async (fn: QUERY_BETWEEN) => {
-  const expName: dynamodb.ExpressionAttributeNameMap = generateKeyProjection(fn.project)
-  let params: dynamodb.DocumentClient.QueryInput = {
+  const expName: AWS.DynamoDB.ExpressionAttributeNameMap = generateKeyProjection(fn.project)
+  let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
     KeyConditionExpression: "#ID = :ID and #SK between :BGW and :END",
     ExpressionAttributeNames: {
@@ -136,10 +135,10 @@ export const queryBetween = async (fn: QUERY_BETWEEN) => {
 }
 
 export const queryIndex = async (fn: QUERY_INDEX) => {
-  let expName: dynamodb.ExpressionAttributeNameMap
+  let expName: AWS.DynamoDB.ExpressionAttributeNameMap
   if (fn.project) expName = generateKeyProjection(fn.project)
 
-  let params: dynamodb.DocumentClient.QueryInput = {
+  let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
     IndexName: fn.indexName,
     KeyConditionExpression: "#ID = :ID",
@@ -164,10 +163,10 @@ export const queryIndex = async (fn: QUERY_INDEX) => {
 }
 
 export const queryIndexSort = async (fn: QUERY_INDEX_SORT) => {
-  let expName: dynamodb.ExpressionAttributeNameMap
+  let expName: AWS.DynamoDB.ExpressionAttributeNameMap
   if (fn.project) expName = generateKeyProjection(fn.project)
 
-  let params: dynamodb.DocumentClient.QueryInput = {
+  let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
     IndexName: fn.indexName,
     KeyConditionExpression: "#ID = :ID and #SK = :SK",
