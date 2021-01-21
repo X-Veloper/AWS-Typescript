@@ -2,9 +2,11 @@
 import AWS, { nanoid } from '../aws'
 
 
-import { PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY_INDEX_SORT, PUT, UPDATE_SORT, SCAN } from './types.d'
+import type { PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY_INDEX_SORT, PUT, UPDATE_SORT, SCAN, QUERY_INDEX_CONTAIN } from './index.d'
 
 const client: AWS.DynamoDB.Types.DocumentClient = new AWS.DynamoDB.DocumentClient()
+
+const generateKeyProjection = (item: any) => (item ? item.reduce((sum: any, cur: any) => ({ ...sum, ['#' + nanoid()]: cur }), {}) : null)
 
 export const scan = async (fn: SCAN) => {
   let params: any = {
@@ -75,9 +77,6 @@ export const query = async (fn: QUERY) => {
     })
   })
 }
-
-const generateKeyProjection = (item: any) => (item ? item.reduce((sum: any, cur: any) => ({ ...sum, ['#' + nanoid()]: cur }), {}) : null)
-
 
 export const querySort = async (fn: QUERY_SORT) => {
   const expName: AWS.DynamoDB.ExpressionAttributeNameMap = generateKeyProjection(fn.project)
@@ -180,6 +179,32 @@ export const queryIndexSort = async (fn: QUERY_INDEX_SORT) => {
       ":SK": fn.sv
     },
     ProjectionExpression: fn.project ? Object.keys(expName).join() : null,
+  }
+  return new Promise<any[]>(resolve => {
+    client.query(params, (err, data) => {
+      if (err) {
+        console.log(err);
+        resolve([])
+      }
+      resolve(data.Items)
+    })
+  })
+}
+
+export const queryIndexContains = async (fn: QUERY_INDEX_CONTAIN) => {
+  let params: AWS.DynamoDB.DocumentClient.QueryInput = {
+    TableName: fn.tableName,
+    IndexName: fn.indexName,
+    KeyConditionExpression: "#82890 = :82890",
+    FilterExpression: "contains(#82891, :82891)",
+    ExpressionAttributeNames: {
+      "#82890": fn.pk,
+      "#82891": fn.keywordKey
+    },
+    ExpressionAttributeValues: {
+      ":82890": fn.pv,
+      ":82891": fn.keywordValue
+    }
   }
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {

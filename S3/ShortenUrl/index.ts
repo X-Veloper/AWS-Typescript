@@ -1,6 +1,5 @@
-import { S3, nanoid }  from '../../aws'
-
-
+import S3 from '..'
+import { nanoid }  from '../../aws'
 
 export const createShortenUrl = async (redirectUrl: string) => {
   const shortenKey = nanoid()

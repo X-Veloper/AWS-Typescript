@@ -12,7 +12,7 @@ export type QUERY = {
   pv: any
 }
 
-export interface QUERY_SORT {
+export type QUERY_SORT = {
   tableName: string
   pk: string
   pv: string
@@ -21,7 +21,7 @@ export interface QUERY_SORT {
   project?: PROJECT_KEYS | []
 }
 
-export interface QUERY_BETWEEN {
+export type QUERY_BETWEEN = {
   tableName: string
   pk: string
   pv: string
@@ -55,6 +55,16 @@ export type QUERY_INDEX_SORT = {
   pv: string
   sk: string
   sv: string
+  project?: PROJECT_KEYS
+}
+
+export type QUERY_INDEX_CONTAIN = {
+  tableName: string
+  indexName: string
+  pk: string
+  pv: string
+  keywordKey: string
+  keywordValue: string
   project?: PROJECT_KEYS
 }
 
