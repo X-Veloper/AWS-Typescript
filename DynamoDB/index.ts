@@ -38,15 +38,15 @@ export const scanAll = async (fn: SCAN) => {
   })
 }
 
-export const put = async ({ tableName, item }: PUT) => {
-  const params = {
-    TableName: tableName,
-    Item: item
+export const put = async (fn: PUT) => {
+  const params: AWS.DynamoDB.DocumentClient.PutItemInput = {
+    TableName: fn.tableName,
+    Item: fn.item
   }
   return new Promise(resolve => {
-    client.put(params, function (err, data) {
+    client.put(params, (err, data) => {
       if (err) {
-        console.log(err);
+        console.log('error :', err)
         resolve({ status: 400 })
       }
       else resolve({ status: 200 })
@@ -56,7 +56,7 @@ export const put = async ({ tableName, item }: PUT) => {
 
 
 export const query = async (fn: QUERY) => {
-  let params: any = {
+  let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
     KeyConditionExpression: "#ID = :ID",
     ExpressionAttributeNames: {
