@@ -11,6 +11,7 @@ const generateKeyProjection = (item: any) => (item ? item.reduce((sum: any, cur:
 export const scan = async (fn: SCAN) => {
   let params: any = {
     TableName: fn.tableName,
+    ScanIndexForward: false,
   }
   // if (exc !== '') params['ExclusiveStartKey'] = exc
   // if (filter !== '') {
@@ -58,6 +59,7 @@ export const put = async (fn: PUT) => {
 export const query = async (fn: QUERY) => {
   let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
+    ScanIndexForward: false,
     KeyConditionExpression: "#ID = :ID",
     ExpressionAttributeNames: {
       "#ID": fn.pk
@@ -82,6 +84,7 @@ export const querySort = async (fn: QUERY_SORT) => {
   const expName: AWS.DynamoDB.ExpressionAttributeNameMap = generateKeyProjection(fn.project)
   let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
+    ScanIndexForward: false,
     KeyConditionExpression: "#ID = :ID and #SK = :SK  ",
     ExpressionAttributeNames: {
       "#ID": fn.pk,
@@ -109,6 +112,7 @@ export const queryBetween = async (fn: QUERY_BETWEEN) => {
   const expName: AWS.DynamoDB.ExpressionAttributeNameMap = generateKeyProjection(fn.project)
   let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
+    ScanIndexForward: false,
     KeyConditionExpression: "#ID = :ID and #SK between :BGW and :END",
     ExpressionAttributeNames: {
       "#ID": fn.pk,
@@ -140,6 +144,7 @@ export const queryIndex = async (fn: QUERY_INDEX) => {
   let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
     IndexName: fn.indexName,
+    ScanIndexForward: false,
     KeyConditionExpression: "#ID = :ID",
     ExpressionAttributeNames: {
       "#ID": fn.pk,
@@ -168,6 +173,7 @@ export const queryIndexSort = async (fn: QUERY_INDEX_SORT) => {
   let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
     IndexName: fn.indexName,
+    ScanIndexForward: false,
     KeyConditionExpression: "#ID = :ID and #SK = :SK",
     ExpressionAttributeNames: {
       "#ID": fn.pk,
@@ -195,6 +201,7 @@ export const queryIndexContains = async (fn: QUERY_INDEX_CONTAIN) => {
   let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
     IndexName: fn.indexName,
+    ScanIndexForward: false,
     KeyConditionExpression: "#82890 = :82890",
     FilterExpression: "contains(#82891, :82891)",
     ExpressionAttributeNames: {
