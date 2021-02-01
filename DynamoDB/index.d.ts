@@ -10,6 +10,7 @@ export type QUERY = {
   tableName: string
   pk: string
   pv: any
+  limit?: number
 }
 
 export type QUERY_SORT = {
@@ -19,6 +20,7 @@ export type QUERY_SORT = {
   sk: string
   sv: string
   project?: PROJECT_KEYS | []
+  limit?: number
 }
 
 export type QUERY_BETWEEN = {
@@ -29,6 +31,7 @@ export type QUERY_BETWEEN = {
   start: string
   end: string
   project?: PROJECT_KEYS | []
+  limit?: number
 }
 
 export type UPDATE_SORT = {
@@ -46,6 +49,7 @@ export type QUERY_INDEX = {
   pk: string
   pv: string
   project?: PROJECT_KEYS
+  limit?: number
 }
 
 export type QUERY_INDEX_SORT = {
@@ -56,6 +60,7 @@ export type QUERY_INDEX_SORT = {
   sk: string
   sv: string
   project?: PROJECT_KEYS
+  limit?: number
 }
 
 export type QUERY_INDEX_CONTAIN = {
@@ -66,6 +71,7 @@ export type QUERY_INDEX_CONTAIN = {
   keywordKey: string
   keywordValue: string
   project?: PROJECT_KEYS
+  limit?: number
 }
 
 export type PUT = {

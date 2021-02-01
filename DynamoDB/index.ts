@@ -66,7 +66,8 @@ export const query = async (fn: QUERY) => {
     },
     ExpressionAttributeValues: {
       ":ID": fn.pv
-    }
+    },
+    Limit: fn.limit
   }
 
   return new Promise<any[]>(resolve => {
@@ -85,7 +86,7 @@ export const querySort = async (fn: QUERY_SORT) => {
   let params: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fn.tableName,
     ScanIndexForward: false,
-    KeyConditionExpression: "#ID = :ID and #SK = :SK  ",
+    KeyConditionExpression: "#ID = :ID and #SK = :SK",
     ExpressionAttributeNames: {
       "#ID": fn.pk,
       "#SK": fn.sk,
@@ -96,6 +97,7 @@ export const querySort = async (fn: QUERY_SORT) => {
       ":SK": fn.sv
     },
     ProjectionExpression: fn.project ? Object.keys(expName).join() : null,
+    Limit: fn.limit
   }
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
@@ -125,6 +127,7 @@ export const queryBetween = async (fn: QUERY_BETWEEN) => {
       ":END": fn.end,
     },
     ProjectionExpression: fn.project ? Object.keys(expName).join() : null,
+    Limit: fn.limit
   }
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
@@ -154,6 +157,7 @@ export const queryIndex = async (fn: QUERY_INDEX) => {
       ":ID": fn.pv
     },
     ProjectionExpression: fn.project ? Object.keys(expName).join() : null,
+    Limit: fn.limit
   }
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
@@ -185,6 +189,7 @@ export const queryIndexSort = async (fn: QUERY_INDEX_SORT) => {
       ":SK": fn.sv
     },
     ProjectionExpression: fn.project ? Object.keys(expName).join() : null,
+    Limit: fn.limit
   }
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
@@ -211,7 +216,8 @@ export const queryIndexContains = async (fn: QUERY_INDEX_CONTAIN) => {
     ExpressionAttributeValues: {
       ":82890": fn.pv,
       ":82891": fn.keywordValue
-    }
+    },
+    Limit: fn.limit
   }
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
