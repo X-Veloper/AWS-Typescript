@@ -27,32 +27,25 @@ export const scan = async (fn: SCAN) => {
 }
 
 export const scanAll = async (fn: SCAN) => {
-  const _scan = async (fn: SCAN) => {
+  const _scan = async (tableName, segment) => {
     let params: any = {
-      TableName: fn.tableName,
+      TableName: tableName,
       ScanIndexForward: false,
-      ExclusiveStartKey: fn.lastEvaluatedKey
+      Segment: segment,
+      TotalSegments: 50
+      // ExclusiveStartKey: fn.lastEvaluatedKey
     }
     return new Promise(resolve => {
       client.scan(params, function (err, data) {
         if (err) console.log(err)
-        else resolve(data)
+        else resolve(data.Items)
       })
     })
   }
   return new Promise(async resolve => {
-    let list = []
-    let res: any = await _scan(fn)
-    list.push(...res.Items)
-    while ("LastEvaluatedKey" in res) {
-      res = await _scan({ tableName: fn.tableName, lastEvaluatedKey: res.LastEvaluatedKey })
-      list.push(...res.Items)
-      console.log(res.LastEvaluatedKey);
-      
-      // console.log(res.Items);
-      
-    }
-    resolve(list)
+    let res: any = await Promise.all([...Array(50)].map((item, index) => _scan(fn.tableName, index)))
+    const data = res.reduce((sum, cur) => (sum.concat(cur)), [])
+    resolve(data)
   })
 }
 
