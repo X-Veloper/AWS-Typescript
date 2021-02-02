@@ -1,5 +1,6 @@
 export type SCAN = {
-  tableName: string
+  tableName: string,
+  lastEvaluatedKey? : string
 }
 
 export type SCAN_ALL = {

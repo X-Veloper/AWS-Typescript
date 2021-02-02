@@ -13,7 +13,7 @@ export const scan = async (fn: SCAN) => {
     TableName: fn.tableName,
     ScanIndexForward: false,
   }
-  // if (exc !== '') params['ExclusiveStartKey'] = exc
+  if (fn.lastEvaluatedKey) params['ExclusiveStartKey'] = fn.lastEvaluatedKey
   // if (filter !== '') {
   //   params['FilterExpression'] = filter.key + ' = :FILDATA'
   //   params['ExpressionAttributeValues'] = { ":FILDATA": filter.data }
@@ -21,19 +21,36 @@ export const scan = async (fn: SCAN) => {
   return new Promise(resolve => {
     client.scan(params, function (err, data) {
       if (err) console.log(err)
-      else resolve(data.Items)
+      else fn.lastEvaluatedKey ? resolve(data) : resolve(data.Items)
     })
   })
 }
 
 export const scanAll = async (fn: SCAN) => {
+  const _scan = async (fn: SCAN) => {
+    let params: any = {
+      TableName: fn.tableName,
+      ScanIndexForward: false,
+      ExclusiveStartKey: fn.lastEvaluatedKey
+    }
+    return new Promise(resolve => {
+      client.scan(params, function (err, data) {
+        if (err) console.log(err)
+        else resolve(data)
+      })
+    })
+  }
   return new Promise(async resolve => {
     let list = []
-    let res: any = await scan(fn)
+    let res: any = await _scan(fn)
     list.push(...res.Items)
     while ("LastEvaluatedKey" in res) {
-      res = await scan(fn)
+      res = await _scan({ tableName: fn.tableName, lastEvaluatedKey: res.LastEvaluatedKey })
       list.push(...res.Items)
+      console.log(res.LastEvaluatedKey);
+      
+      // console.log(res.Items);
+      
     }
     resolve(list)
   })
