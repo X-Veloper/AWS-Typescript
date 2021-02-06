@@ -6,6 +6,7 @@ import type { PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY
 
 const client: AWS.DynamoDB.Types.DocumentClient = new AWS.DynamoDB.DocumentClient()
 
+const isEmpty = (item) => (item === undefined || item === null)
 const generateKeyProjection = (item: any) => (item ? item.reduce((sum: any, cur: any) => ({ ...sum, ['#' + nanoid()]: cur }), {}) : null)
 
 export const scan = async (fn: SCAN) => {
@@ -90,7 +91,42 @@ export const query = async (fn: QUERY) => {
     })
   })
 }
+export const advanceQuerySortIndex = async (tableName: string, indexName: string, pk: string, pv: string, sk: string, sv: string | string[], so = '=', option?) => {
+  // let expName: AWS.DynamoDB.ExpressionAttributeNameMap
+  // if (project) expName = generateKeyProjection(project)
 
+  let params: AWS.DynamoDB.DocumentClient.QueryInput = {
+    TableName: tableName,
+    IndexName: indexName,
+    ScanIndexForward: false,
+    KeyConditionExpression: `#ID = :ID and #SK ${so} :SK`,
+    ExpressionAttributeNames: {
+      "#ID": pk,
+      "#SK": sk
+    },
+    ExpressionAttributeValues: {
+      ":ID": pv,
+      ":SK": sv
+    },
+    ...option,
+    // ProjectionExpression: fn.project ? Object.keys(expName).join() : null,
+    // Limit: 100
+  }
+  Object.keys(params).forEach(key => isEmpty(params[key]) && delete params[key])
+  console.log(params);
+
+  return new Promise<any>(resolve => {
+    client.query(params, (err, data) => {
+      if (err) {
+        console.log(err);
+        resolve([])
+      }
+      // console.log(data);
+
+      resolve(data)
+    })
+  })
+}
 export const querySort = async (fn: QUERY_SORT) => {
   const expName: AWS.DynamoDB.ExpressionAttributeNameMap = generateKeyProjection(fn.project)
   let params: AWS.DynamoDB.DocumentClient.QueryInput = {
@@ -149,7 +185,41 @@ export const queryBetween = async (fn: QUERY_BETWEEN) => {
     })
   })
 }
+export const advanceQueryIndex = async (tableName: string, indexName: string, pk: string, pv: string, option?) => {
+  let expName: AWS.DynamoDB.ExpressionAttributeNameMap
+  // if (project) expName = generateKeyProjection(project)
 
+  let params: AWS.DynamoDB.DocumentClient.QueryInput = {
+    TableName: tableName,
+    IndexName: indexName,
+    ScanIndexForward: false,
+    KeyConditionExpression: "#ID = :ID",
+    ExpressionAttributeNames: {
+      "#ID": pk,
+      ...expName
+    },
+    ExpressionAttributeValues: {
+      ":ID": pv
+    },
+    ...option,
+    // ProjectionExpression: fn.project ? Object.keys(expName).join() : null,
+    // Limit: 100
+  }
+  Object.keys(params).forEach(key => isEmpty(params[key]) && delete params[key])
+  console.log(params);
+
+  return new Promise<any>(resolve => {
+    client.query(params, (err, data) => {
+      if (err) {
+        console.log(err);
+        resolve([])
+      }
+      // console.log(data);
+
+      resolve(data)
+    })
+  })
+}
 export const queryIndex = async (fn: QUERY_INDEX) => {
   let expName: AWS.DynamoDB.ExpressionAttributeNameMap
   if (fn.project) expName = generateKeyProjection(fn.project)
@@ -169,12 +239,15 @@ export const queryIndex = async (fn: QUERY_INDEX) => {
     ProjectionExpression: fn.project ? Object.keys(expName).join() : null,
     Limit: fn.limit
   }
+
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
       if (err) {
         console.log(err);
         resolve([])
       }
+      // console.log(data);
+
       resolve(data.Items)
     })
   })
