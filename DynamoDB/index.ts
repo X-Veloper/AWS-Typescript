@@ -2,7 +2,7 @@
 import AWS, { nanoid } from '../aws'
 
 
-import type { PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY_INDEX_SORT, PUT, UPDATE_SORT, SCAN, QUERY_INDEX_CONTAIN } from './index.d'
+import type { PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY_INDEX_SORT, PUT, UPDATE_SORT, SCAN, QUERY_INDEX_CONTAIN, UPDATE_LIST, UPDATE } from './index.d'
 
 const client: AWS.DynamoDB.Types.DocumentClient = new AWS.DynamoDB.DocumentClient()
 
@@ -28,7 +28,7 @@ export const scan = async (fn: SCAN) => {
 }
 
 export const scanAll = async (fn: SCAN) => {
-  const _scan = async (tableName, segment) => {
+  const _scan = async (tableName: string, segment: any) => {
     let params: any = {
       TableName: tableName,
       ScanIndexForward: false,
@@ -45,7 +45,7 @@ export const scanAll = async (fn: SCAN) => {
   }
   return new Promise(async resolve => {
     let res: any = await Promise.all([...Array(50)].map((item, index) => _scan(fn.tableName, index)))
-    const data = res.reduce((sum, cur) => (sum.concat(cur)), [])
+    const data = res.reduce((sum: any, cur: any) => (sum.concat(cur)), [])
     resolve(data)
   })
 }
@@ -62,6 +62,62 @@ export const put = async (fn: PUT) => {
         resolve({ status: 400 })
       }
       else resolve({ status: 200 })
+    })
+  })
+}
+
+export const updateList = async (fn: UPDATE_LIST) => {
+  const params: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+    TableName: fn.tableName,
+    Key: {
+      [fn.pk]: fn.pv
+    },
+    ExpressionAttributeNames: {
+      "#data": fn.updateKey
+    },
+    ExpressionAttributeValues: {
+      ":data": [fn.updateValue]
+    },
+    UpdateExpression: "SET #data = list_append(#data, :data)"
+  }
+  return new Promise(resolve => {
+    client.update(params, (err, data) => {
+      if (err) {
+        console.log('error :', err)
+        resolve({ status: 400 })
+      }
+      else resolve({ status: 200 })
+    })
+  })
+}
+
+export const update = async (fn: UPDATE) => {
+  // console.log(item);
+
+  let _item = Object.assign({}, fn.item);
+
+  const keys = Object.keys(_item)
+  const _ExpressionAttributeNames = keys.reduce((ac, a) => ({ ...ac, ['#' + a]: a }), {})
+  const _ExpressionAttributeValues = keys.reduce((ac, a) => ({ ...ac, [':' + a]: _item[a] }), {})
+  let _UpdateExpression = 'set '
+  keys.reduce((_, a) => (_UpdateExpression += ('#' + a + ' = :' + a + ', ')), {})
+
+  const params = {
+    TableName: fn.tableName,
+    Key: { [fn.pk]: fn.pv },
+    UpdateExpression: _UpdateExpression.slice(0, -2),
+    ExpressionAttributeNames: _ExpressionAttributeNames,
+    ExpressionAttributeValues: _ExpressionAttributeValues
+  }
+  //   console.log(params);
+
+  return new Promise(reslove => {
+    client.update(params, function (err, data) {
+      if (err) {
+        console.log("Error", err)
+        // alert(JSON.stringify(err))
+      }
+      else reslove('success')
     })
   })
 }

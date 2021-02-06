@@ -80,4 +80,19 @@ export type PUT = {
   item: {}
 }
 
+export type UPDATE = {
+  tableName: string
+  pk: string
+  pv: string
+  item: any
+}
+
+export type UPDATE_LIST = {
+  tableName: string
+  pk: string
+  pv: string
+  updateKey: string
+  updateValue: any
+}
+
 export type PROJECT_KEYS = Array<string>

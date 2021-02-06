@@ -8,7 +8,7 @@ export const createShortenUrl = async (redirectUrl: string) => {
     Key: shortenKey,
     WebsiteRedirectLocation: redirectUrl
   }
-  console.log(params)
+  // console.log(params)
   return new Promise<string>((resolve) => {
     S3.putObject(params, function(err, data) {
       if (err){
@@ -16,8 +16,8 @@ export const createShortenUrl = async (redirectUrl: string) => {
         resolve('')
       }
       else {
-        console.log(data)
-        resolve(`links.dataslot.pro/${shortenKey}`)
+        // console.log(data)
+        // resolve(`links.dataslot.pro/${shortenKey}`)
       }
     })
   })
