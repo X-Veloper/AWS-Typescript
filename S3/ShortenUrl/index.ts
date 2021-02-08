@@ -17,7 +17,7 @@ export const createShortenUrl = async (redirectUrl: string) => {
       }
       else {
         // console.log(data)
-        // resolve(`links.dataslot.pro/${shortenKey}`)
+        resolve(`links.dataslot.pro/${shortenKey}`)
       }
     })
   })
