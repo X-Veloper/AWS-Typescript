@@ -18,7 +18,7 @@ export const scan = async (fn: SCAN) => {
   // if (filter !== '') {
   //   params['FilterExpression'] = filter.key + ' = :FILDATA'
   //   params['ExpressionAttributeValues'] = { ":FILDATA": filter.data }
-  // }
+  // }//
   return new Promise(resolve => {
     client.scan(params, function (err, data) {
       if (err) console.log(err)
@@ -50,22 +50,45 @@ export const scanAll = async (fn: SCAN) => {
   })
 }
 
-export const put = async (fn: PUT) => {
+export const put = async ({ tableName, item, key = "PK" }: PUT) => {
   const params: AWS.DynamoDB.DocumentClient.PutItemInput = {
-    TableName: fn.tableName,
-    Item: fn.item
+    TableName: tableName,
+    Item: item,
+    ExpressionAttributeNames: { "#cd420": key },
+    ConditionExpression: "attribute_not_exists(#cd420)"
   }
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     client.put(params, (err, data) => {
       if (err) {
-        console.log('error :', err)
-        resolve({ status: 400 })
+        // console.log('error :', err)
+        reject({ status: 400 })
       }
       else resolve({ status: 200 })
     })
   })
 }
-
+export const updateSortAdd = (_table, _keyname, _keyid, _sortname, _sortid, _addKey, _addValue) => {
+  const params = {
+      TableName: _table,
+      Key: { [_keyname]: _keyid, [_sortname]: _sortid },
+      UpdateExpression: "ADD #key :value",
+      ExpressionAttributeNames: {
+          '#key': _addKey
+      },
+      ExpressionAttributeValues: {
+          ':value': _addValue
+      },
+      ReturnValues: 'UPDATED_NEW'
+  }
+  return new Promise(reslove => {
+    client.update(params, function (err, data) {
+          if (err)
+              console.log("Error", err)
+          else reslove(data.Attributes[_addKey])
+          console.log(data);
+      })
+  })
+}
 export const updateList = async (fn: UPDATE_LIST) => {
   const params: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
     TableName: fn.tableName,
@@ -94,7 +117,7 @@ export const updateList = async (fn: UPDATE_LIST) => {
 export const update = async (fn: UPDATE) => {
   // console.log(item);
 
-  let _item = Object.assign({}, fn.item);
+  let _item = Object.assign({}, fn.item)
 
   const keys = Object.keys(_item)
   const _ExpressionAttributeNames = keys.reduce((ac, a) => ({ ...ac, ['#' + a]: a }), {})
@@ -140,7 +163,7 @@ export const query = async (fn: QUERY) => {
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
       if (err) {
-        console.log(err);
+        console.log(err)
         resolve([])
       }
       resolve(data.Items)
@@ -169,12 +192,12 @@ export const advanceQuerySortIndex = async (tableName: string, indexName: string
     // Limit: 100
   }
   Object.keys(params).forEach(key => isEmpty(params[key]) && delete params[key])
-  console.log(params);
+  // console.log(params);
 
   return new Promise<any>(resolve => {
     client.query(params, (err, data) => {
       if (err) {
-        console.log(err);
+        console.log(err)
         resolve([])
       }
       // console.log(data);
@@ -204,14 +227,43 @@ export const querySort = async (fn: QUERY_SORT) => {
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
       if (err) {
-        console.log(err);
+        console.log(err)
         resolve([])
       }
       resolve(data.Items)
     })
   })
 }
+export const queryBeginWith = async (fn: QUERY_SORT) => {
+  let expName: AWS.DynamoDB.ExpressionAttributeNameMap
+  if (fn.project) expName = generateKeyProjection(fn.project)
 
+  let params: AWS.DynamoDB.DocumentClient.QueryInput = {
+    TableName: fn.tableName,
+    ScanIndexForward: false,
+    KeyConditionExpression: "#ID = :ID and begins_with(#SK,:SK)",
+    ExpressionAttributeNames: {
+      "#ID": fn.pk,
+      "#SK": fn.sk,
+      ...expName
+    },
+    ExpressionAttributeValues: {
+      ":ID": fn.pv,
+      ":SK": fn.sv
+    },
+    ProjectionExpression: fn.project ? Object.keys(expName).join() : null,
+    Limit: fn.limit
+  }
+  return new Promise<any[]>(resolve => {
+    client.query(params, (err, data) => {
+      if (err) {
+        console.log(err)
+        resolve([])
+      }
+      resolve(data.Items)
+    })
+  })
+}
 export const queryBetween = async (fn: QUERY_BETWEEN) => {
   const expName: AWS.DynamoDB.ExpressionAttributeNameMap = generateKeyProjection(fn.project)
   let params: AWS.DynamoDB.DocumentClient.QueryInput = {
@@ -234,7 +286,7 @@ export const queryBetween = async (fn: QUERY_BETWEEN) => {
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
       if (err) {
-        console.log(err);
+        console.log(err)
         resolve([])
       }
       resolve(data.Items)
@@ -262,12 +314,12 @@ export const advanceQueryIndex = async (tableName: string, indexName: string, pk
     // Limit: 100
   }
   Object.keys(params).forEach(key => isEmpty(params[key]) && delete params[key])
-  console.log(params);
+  // console.log(params);
 
   return new Promise<any>(resolve => {
     client.query(params, (err, data) => {
       if (err) {
-        console.log(err);
+        console.log(err)
         resolve([])
       }
       // console.log(data);
@@ -299,11 +351,42 @@ export const queryIndex = async (fn: QUERY_INDEX) => {
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
       if (err) {
-        console.log(err);
+        console.log(err)
         resolve([])
       }
       // console.log(data);
 
+      resolve(data.Items)
+    })
+  })
+}
+export const queryIndexBeginWith = async (fn: QUERY_INDEX_SORT) => {
+  let expName: AWS.DynamoDB.ExpressionAttributeNameMap
+  if (fn.project) expName = generateKeyProjection(fn.project)
+
+  let params: AWS.DynamoDB.DocumentClient.QueryInput = {
+    TableName: fn.tableName,
+    IndexName: fn.indexName,
+    ScanIndexForward: false,
+    KeyConditionExpression: "#ID = :ID and begins_with(#SK,:SK)",
+    ExpressionAttributeNames: {
+      "#ID": fn.pk,
+      "#SK": fn.sk,
+      ...expName
+    },
+    ExpressionAttributeValues: {
+      ":ID": fn.pv,
+      ":SK": fn.sv
+    },
+    ProjectionExpression: fn.project ? Object.keys(expName).join() : null,
+    Limit: fn.limit
+  }
+  return new Promise<any[]>(resolve => {
+    client.query(params, (err, data) => {
+      if (err) {
+        console.log(err)
+        resolve([])
+      }
       resolve(data.Items)
     })
   })
@@ -333,7 +416,7 @@ export const queryIndexSort = async (fn: QUERY_INDEX_SORT) => {
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
       if (err) {
-        console.log(err);
+        console.log(err)
         resolve([])
       }
       resolve(data.Items)
@@ -361,7 +444,7 @@ export const queryIndexContains = async (fn: QUERY_INDEX_CONTAIN) => {
   return new Promise<any[]>(resolve => {
     client.query(params, (err, data) => {
       if (err) {
-        console.log(err);
+        console.log(err)
         resolve([])
       }
       resolve(data.Items)
@@ -371,7 +454,7 @@ export const queryIndexContains = async (fn: QUERY_INDEX_CONTAIN) => {
 
 
 export const updateSort = async (fn: UPDATE_SORT) => {
-  let _item = Object.assign({}, fn.item);
+  let _item = Object.assign({}, fn.item)
 
   const keys = Object.keys(_item)
   const _ExpressionAttributeNames = keys.reduce((ac, a) => ({ ...ac, ['#' + a.replace('-', '')]: a }), {})
@@ -390,7 +473,7 @@ export const updateSort = async (fn: UPDATE_SORT) => {
   return new Promise<{}>(resolve => {
     client.update(params, (err, data) => {
       if (err) {
-        console.log(err);
+        console.log(err)
         resolve({ success: true })
       }
       resolve({ success: true })

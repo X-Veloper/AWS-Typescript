@@ -1,6 +1,6 @@
 export type SCAN = {
   tableName: string,
-  lastEvaluatedKey? : string
+  lastEvaluatedKey?: string
 }
 
 export type SCAN_ALL = {
@@ -64,6 +64,7 @@ export type QUERY_INDEX_SORT = {
   limit?: number
 }
 
+
 export type QUERY_INDEX_CONTAIN = {
   tableName: string
   indexName: string
@@ -78,6 +79,7 @@ export type QUERY_INDEX_CONTAIN = {
 export type PUT = {
   tableName: string
   item: {}
+  key?: string
 }
 
 export type UPDATE = {
