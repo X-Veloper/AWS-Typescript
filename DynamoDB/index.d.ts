@@ -23,6 +23,12 @@ export type QUERY_SORT = {
   project?: PROJECT_KEYS | []
   limit?: number
 }
+export type SCAN_BETWEEN = {
+  tableName: string
+  key: string
+  start: string
+  end: string
+}
 
 export type QUERY_BETWEEN = {
   tableName: string

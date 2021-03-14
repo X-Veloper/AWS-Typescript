@@ -2,7 +2,7 @@
 import AWS, { nanoid } from '../aws'
 
 
-import type { PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY_INDEX_SORT, PUT, UPDATE_SORT, SCAN, QUERY_INDEX_CONTAIN, UPDATE_LIST, UPDATE } from './index.d'
+import type { SCAN_BETWEEN, PROJECT_KEYS, QUERY, QUERY_SORT, QUERY_BETWEEN, QUERY_INDEX, QUERY_INDEX_SORT, PUT, UPDATE_SORT, SCAN, QUERY_INDEX_CONTAIN, UPDATE_LIST, UPDATE } from './index.d'
 
 const client: AWS.DynamoDB.Types.DocumentClient = new AWS.DynamoDB.DocumentClient()
 
@@ -23,6 +23,27 @@ export const scan = async (fn: SCAN) => {
     client.scan(params, function (err, data) {
       if (err) console.log(err)
       else fn.lastEvaluatedKey ? resolve(data) : resolve(data.Items)
+    })
+  })
+}
+
+export const scanBetween = async(fn: SCAN_BETWEEN) => {
+  let params: any = {
+    TableName: fn.tableName,
+    ConsistentRead: false,
+    FilterExpression: "#a5a00 BETWEEN :a5a00 AND :a5a01",
+    ExpressionAttributeValues: {
+      ":a5a00": fn.start,
+      ":a5a01": fn.end
+    },
+    ExpressionAttributeNames: {
+      "#a5a00": fn.key
+    }
+  }
+  return new Promise(resolve => {
+    client.scan(params, function (err, data) {
+      if (err) console.log(err)
+      else resolve(data)
     })
   })
 }
